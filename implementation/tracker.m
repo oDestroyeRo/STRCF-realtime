@@ -6,6 +6,7 @@ function results = tracker(params)
 
 % Get sequence info
 [seq, im] = get_sequence_info(params.seq);
+disp(seq);
 params = rmfield(params, 'seq');
 if isempty(im)
     seq.rect_position = [];
