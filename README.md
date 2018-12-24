@@ -4,7 +4,7 @@
 
 1. Clone the GIT repository:
 
-   $ git clone https://github.com/lifeng9472/STRCF.git
+   $ git clone https://github.com/oDestroyeRo/STRCF-realtime
 
 2. Clone the submodules.  
    In the repository directory, run the commands:
