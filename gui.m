@@ -123,8 +123,8 @@ function buttonStart_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 setup_paths();
 handles.isStart = 1;
-count = 1;
-time = 0.1;
+count = 0;
+time = 0;
 handles.isRun = 0;
 handles.isFound = 0;
 handles.countList = 0;
@@ -175,10 +175,10 @@ while (handles.isStart)
         %rectangle('Position',handles.listParams(1).params.rect_position_vis, 'EdgeColor','g', 'LineWidth',2);
     end 
     %listParams = handles.listParams;
-    text(10, 10, ['FPS: ' int2str(count/time)], 'color', [0 1 1]);
-    axis image;
-    count = count + 1;
     time = time + toc();
+    count = count + 1;
+    text(10, 10, ['FPS: ' int2str(floor(count/time))], 'color', [0 1 1]);
+    axis image;
     guidata(hObject,handles)
    
 end
