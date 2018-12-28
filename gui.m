@@ -178,6 +178,10 @@ while (handles.isStart)
     time = time + toc();
     count = count + 1;
     text(10, 10, ['FPS: ' int2str(floor(count/time))], 'color', [0 1 1]);
+    if (time >= 1)
+        time = 0;
+        count = 0;
+    end
     axis image;
     guidata(hObject,handles)
    
@@ -223,6 +227,7 @@ end
 function img_gray = openCamera(handles)
     axes(handles.image)
     img = snapshot(handles.cam);
+    img = imresize(img,[480, 640]);
     img = flip(img,2);
     img_gray = rgb2gray(img);
     imagesc(img);
