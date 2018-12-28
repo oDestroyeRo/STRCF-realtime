@@ -22,7 +22,7 @@ function varargout = gui(varargin)
 
 % Edit the above text to modify the response to help gui
 
-% Last Modified by GUIDE v2.5 22-Dec-2018 10:00:43
+% Last Modified by GUIDE v2.5 29-Dec-2018 06:14:12
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -102,19 +102,73 @@ function buttonEnroll_Callback(hObject, eventdata, handles)
 % hObject    handle to buttonEnroll (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-switch handles.popupmenu.Value
-    case 1
-        color = 'r';
-    case 2
-        color = 'g';
-    case 3
-        color = 'b';
-    case 4
-        color = 'y';               
-end  
-handles.drawBbox = drawrectangle(handles.image,'LineWidth',5,'Color',color);
-handles.drawBbox = floor(handles.drawBbox.Position);
-guidata(hObject,handles);
+  handles.isStart = 0;
+  handles.isRun = 0;
+  handles.capture = 0;
+  handles.isEnroll = 1;
+  count = 0;
+  time = 0;
+  set(handles.buttonStop,'Enable','on');
+  set(handles.buttonEnroll,'Enable','off');
+  set(handles.buttonStart,'Enable','on');
+  set(handles.captureButton,'Enable','on');
+  set(handles.labelEdit,'Enable','on');
+  set(handles.popupmenu,'Enable','on');
+  guidata(hObject,handles);
+  
+  while (handles.isEnroll)
+      tic();
+      [~,img] = openCamera(handles);
+      handles = guidata(hObject);  
+      handles.img_real = img;
+      guidata(hObject,handles);
+      time = time + toc();
+      count = count + 1;
+      text(10, 10, ['FPS: ' int2str(floor(count/time))], 'color', [0 1 1]);
+      bbox = py.facerecog.detect(img);
+      bbox = cell(bbox);
+      if py.len(bbox) > 0
+        if py.len(bbox) == 1
+            set(handles.captureButton,'Enable','on');
+        else
+            set(handles.captureButton,'Enable','off');
+        end
+        for n = 1:py.len(bbox)
+            top = double(bbox{n}{1})*4;
+            right = double(bbox{n}{2})*4;
+            bottom = double(bbox{n}{3})*4;
+            left = double(bbox{n}{4})*4;
+            b = [left, top, right-left ,bottom-top];
+            rect = rectangle('Position',b);
+            set(rect,'FaceColor','none','EdgeColor','b','LineWidth',2);
+            rect_title(rect,"Face");
+            
+            if (handles.capture)
+                folder = 'images/';
+                label = handles.labelEdit.String;
+                fileType = '.jpg';
+                s = strcat(folder,label,fileType);
+                img = handles.img_real;
+                img = imcrop(img,b);
+                imwrite(img,s);
+                imshow(img)
+                handles.capture = 0;
+                handles.isEnroll = 0;
+                break;
+            end
+                       
+        end
+      else
+          set(handles.captureButton,'Enable','off');
+      end
+      if (time >= 1)
+        time = 0;
+        count = 0;
+      end
+      axis image;
+  end
+  
+  guidata(hObject, handles); % Update handles structure
 
 % --- Executes on button press in buttonStart.
 function buttonStart_Callback(hObject, eventdata, handles)
@@ -123,6 +177,7 @@ function buttonStart_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 setup_paths();
 handles.isStart = 1;
+handles.isEnroll = 0;
 count = 0;
 time = 0;
 handles.isRun = 0;
@@ -133,52 +188,75 @@ handles.drawBbox = [];
 set(handles.buttonStop,'Enable','on');
 set(handles.buttonEnroll,'Enable','on');
 set(handles.buttonStart,'Enable','off');
+set(handles.captureButton,'Enable','off');
+set(handles.labelEdit,'Enable','off');
+set(handles.popupmenu,'Enable','off');
+%system('python faceregcog.py');
+py.facerecog.init();
 guidata(hObject,handles);
 
 while (handles.isStart)
     tic();
     %drawnow %Give the button callback a chance to interrupt the 
-    img_gray = openCamera(handles);
+    [img_gray,img_real] = openCamera(handles);
     handles = guidata(hObject);  %Get the newest GUI data
-    
-    if ~isempty(handles.drawBbox)
-        [params] = create_realtime_sequence(img_gray,handles.drawBbox);
-        switch handles.popupmenu.Value
-            case 1
-                params.color = 'r';
-            case 2
-                params.color = 'g';
-            case 3
-                params.color = 'b';
-            case 4
-                params.color = 'y';               
-        end       
-        params.label = handles.labelEdit.String;
-        handles.params = run_realtime_STRCF(params, handles);
-        [~,sizeParams] = size(handles.listParams);
-        handles.countList = sizeParams;
-        handles.listParams(handles.countList+1).params = handles.params;
-        handles.drawBbox = [];
-        handles.countList = sizeParams;
-    end
-    if ~isempty(handles.listParams)
-        listParams = handles.listParams;
-        countList = handles.countList;
-        for i = 1:countList+1
-            listParams(i).params.im = img_gray;
-            listParams(i).params = run_realtime_STRCF(listParams(i).params,handles);
-            rect = rectangle('Position',listParams(i).params.rect_position_vis);
-            set(rect,'FaceColor','none','EdgeColor',listParams(i).params.color,'LineWidth',1);
-            rect_title(rect,listParams(i).params.label);
+    handles.img_real = img_real;
+    bbox = py.facerecog.recog(img_real);
+    bbox = cell(bbox);
+    if py.len(bbox) > 0
+        for n = 1:py.len(bbox)
+            name = string(bbox{n}{2});
+            if name ~= "Unknown" 
+                top = double(bbox{n}{1}{1})*4;
+                right = double(bbox{n}{1}{2})*4;
+                bottom = double(bbox{n}{1}{3})*4;
+                left = double(bbox{n}{1}{4})*4;
+                b = [left, top, right-left ,bottom-top];              
+                indexSame = -1;
+                [~,handles.countList] = size(handles.listParams);
+                for i = 1:handles.countList
+                    if handles.listParams(i).params.label == name
+                        indexSame = i;
+                        break;
+                    end
+                end
+                if indexSame ~= -1
+                    handles.listParams(indexSame) = [];;
+                end
+                [params] = create_realtime_sequence(img_gray,b);
+                params.color = "g";
+                params.label = name;
+                handles.params = run_realtime_STRCF(params, handles);
+                [~,handles.countList] = size(handles.listParams);
+                handles.listParams(handles.countList+1).params = handles.params;   
+            end
         end
-        handles.listParams = listParams;
-        %rectangle('Position',handles.listParams(1).params.rect_position_vis, 'EdgeColor','g', 'LineWidth',2);
-    end 
-    %listParams = handles.listParams;
+    end
+    [~,handles.countList] = size(handles.listParams);
+    if handles.countList > 0 && ~isempty(handles.countList)
+        indexOut = -1;       
+        for i = 1:handles.countList
+            handles.listParams(i).params.im = img_gray;
+            handles.listParams(i).params = run_realtime_STRCF(handles.listParams(i).params,handles);           
+            bbox = handles.listParams(i).params.rect_position_vis;
+            [height, ~] = size(handles.img_real);
+            if (0 - bbox(1,3)/2 > bbox(1,1) || 0 - bbox(1,4)/2 > bbox(1,2) || bbox(1,1) + bbox(1,3)/2 > 640 || bbox(1,2) + bbox(1,4)/2 > height )
+                indexOut = i;
+            end
+            rect = rectangle('Position',handles.listParams(i).params.rect_position_vis);
+            set(rect,'FaceColor','none','EdgeColor',handles.listParams(i).params.color,'LineWidth',2);
+            rect_title(rect,handles.listParams(i).params.label);
+        end
+        if indexOut ~= -1
+            handles.listParams(indexOut) = [];            
+            [~,handles.countList] = size(handles.listParams);            
+            guidata(hObject,handles);
+        end
+    end
     time = time + toc();
     count = count + 1;
     text(10, 10, ['FPS: ' int2str(floor(count/time))], 'color', [0 1 1]);
-    if (time >= 1)
+    if (time >= 2)
         time = 0;
         count = 0;
     end
@@ -192,7 +270,7 @@ global updateflag
 updateflag = false;
 % Add initial title to UserData
 rect.UserData.str = str;
-rect.UserData.t = text(rect.Position(1)+10,rect.Position(2)-10,rect.UserData.str,'HorizontalAlignment','center');
+rect.UserData.t = text(rect.Position(1)+4,rect.Position(2)+21,rect.UserData.str,'HorizontalAlignment','left','FontSize',25, 'BackgroundColor', 'g');
 % Add Callbacks
 ax = rect.Parent;
 f = ax.Parent;
@@ -224,10 +302,11 @@ elseif ishandle(src) && strcmp(get(src,'type'),'rectangle')
     f.UserData.RectData.Pdown = evt;
 end
 
-function img_gray = openCamera(handles)
+function [img_gray,img] = openCamera(handles)
     axes(handles.image)
+    
     img = snapshot(handles.cam);
-    img = imresize(img,[480, 640]);
+    img = imresize(img,[480 640]);
     img = flip(img,2);
     img_gray = rgb2gray(img);
     imagesc(img);
@@ -241,9 +320,13 @@ function buttonStop_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
   handles.isStart = 0;
   handles.isRun = 0;
+  handles.isEnroll = 0;
   set(handles.buttonStop,'Enable','off');
   set(handles.buttonEnroll,'Enable','off');
+  set(handles.captureButton,'Enable','off');
   set(handles.buttonStart,'Enable','on');
+  set(handles.popupmenu,'Enable','off');
+  set(handles.labelEdit,'Enable','off');
   guidata(hObject, handles); % Update handles structure
 
 
@@ -268,3 +351,12 @@ function popupmenu_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in captureButton.
+function captureButton_Callback(hObject, eventdata, handles)
+% hObject    handle to captureButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.capture = 1;
+guidata(hObject, handles);
