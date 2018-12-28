@@ -134,10 +134,10 @@ function buttonEnroll_Callback(hObject, eventdata, handles)
             set(handles.captureButton,'Enable','off');
         end
         for n = 1:py.len(bbox)
-            top = double(bbox{n}{1})*4;
-            right = double(bbox{n}{2})*4;
-            bottom = double(bbox{n}{3})*4;
-            left = double(bbox{n}{4})*4;
+            top = double(bbox{n}{1})*2;
+            right = double(bbox{n}{2})*2;
+            bottom = double(bbox{n}{3})*2;
+            left = double(bbox{n}{4})*2;
             b = [left, top, right-left ,bottom-top];
             rect = rectangle('Position',b);
             set(rect,'FaceColor','none','EdgeColor','b','LineWidth',2);
@@ -201,37 +201,52 @@ while (handles.isStart)
     [img_gray,img_real] = openCamera(handles);
     handles = guidata(hObject);  %Get the newest GUI data
     handles.img_real = img_real;
-    bbox = py.facerecog.recog(img_real);
-    bbox = cell(bbox);
-    if py.len(bbox) > 0
-        for n = 1:py.len(bbox)
-            name = string(bbox{n}{2});
-            if name ~= "Unknown" 
-                top = double(bbox{n}{1}{1})*4;
-                right = double(bbox{n}{1}{2})*4;
-                bottom = double(bbox{n}{1}{3})*4;
-                left = double(bbox{n}{1}{4})*4;
-                b = [left, top, right-left ,bottom-top];              
-                indexSame = -1;
-                [~,handles.countList] = size(handles.listParams);
-                for i = 1:handles.countList
-                    if handles.listParams(i).params.label == name
-                        indexSame = i;
-                        break;
+    %%recog stage
+    if mod(count,3) == 0
+        bbox = py.facerecog.recog(img_real);
+        bbox = cell(bbox);
+        if py.len(bbox) > 0
+            for n = 1:py.len(bbox)
+                name = string(bbox{n}{2});
+                if name ~= "Unknown" 
+                    top = double(bbox{n}{1}{1})*2;
+                    right = double(bbox{n}{1}{2})*2;
+                    bottom = double(bbox{n}{1}{3})*2;
+                    left = double(bbox{n}{1}{4})*2;
+                    b = [left, top, right-left ,bottom-top];              
+                    indexSame = -1;
+                    [~,handles.countList] = size(handles.listParams);
+                    for i = 1:handles.countList
+                        if handles.listParams(i).params.label == name
+                            indexSame = i;
+                            break;
+                        end
                     end
+                    if indexSame ~= -1
+                        handles.listParams(indexSame) = [];
+                    end
+                    [params] = create_realtime_sequence(img_gray,b);
+                    params.color = "g";
+                    params.label = name;
+                    handles.params = run_realtime_STRCF(params, handles);
+                    [~,handles.countList] = size(handles.listParams);
+                    handles.listParams(handles.countList+1).params = handles.params;  
+                    
+                else
+                    top = double(bbox{n}{1}{1})*2;
+                    right = double(bbox{n}{1}{2})*2;
+                    bottom = double(bbox{n}{1}{3})*2;
+                    left = double(bbox{n}{1}{4})*2;
+                    b = [left, top, right-left ,bottom-top]; 
+                    rect = rectangle('Position',b);
+                    set(rect,'FaceColor','none','EdgeColor',"y",'LineWidth',2);
+                    rect_title(rect,name);
                 end
-                if indexSame ~= -1
-                    handles.listParams(indexSame) = [];;
-                end
-                [params] = create_realtime_sequence(img_gray,b);
-                params.color = "g";
-                params.label = name;
-                handles.params = run_realtime_STRCF(params, handles);
-                [~,handles.countList] = size(handles.listParams);
-                handles.listParams(handles.countList+1).params = handles.params;   
             end
         end
     end
+    
+    %%%tracking stage
     [~,handles.countList] = size(handles.listParams);
     if handles.countList > 0 && ~isempty(handles.countList)
         indexOut = -1;       
@@ -240,7 +255,7 @@ while (handles.isStart)
             handles.listParams(i).params = run_realtime_STRCF(handles.listParams(i).params,handles);           
             bbox = handles.listParams(i).params.rect_position_vis;
             [height, ~] = size(handles.img_real);
-            if (0 - bbox(1,3)/2 > bbox(1,1) || 0 - bbox(1,4)/2 > bbox(1,2) || bbox(1,1) + bbox(1,3)/2 > 640 || bbox(1,2) + bbox(1,4)/2 > height )
+            if (0 - bbox(1,3)/100 > bbox(1,1) || 0 - bbox(1,4)/100 > bbox(1,2) || bbox(1,1) + bbox(1,3) > 640 || bbox(1,2) + bbox(1,4) > height )
                 indexOut = i;
             end
             rect = rectangle('Position',handles.listParams(i).params.rect_position_vis);
@@ -256,7 +271,7 @@ while (handles.isStart)
     time = time + toc();
     count = count + 1;
     text(10, 10, ['FPS: ' int2str(floor(count/time))], 'color', [0 1 1]);
-    if (time >= 2)
+    if (time >= 1)
         time = 0;
         count = 0;
     end

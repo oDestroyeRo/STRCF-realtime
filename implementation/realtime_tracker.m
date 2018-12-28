@@ -106,7 +106,7 @@ if ~(params.seq.isFirst)
         case 'custom'
             params.img_sample_sz = [params.base_target_sz(1)*2 params.base_target_sz(2)*2];
     end
-
+    
     [params.features, params.global_fparams, params.feature_info] = init_features(params.features, params.global_fparams, params.is_color_image, params.img_sample_sz, 'exact');
 
     % Set feature info
@@ -175,7 +175,6 @@ if ~(params.seq.isFirst)
     params.scale_step = params.scale_step;
     params.scale_exp = (-floor((params.nScales-1)/2):ceil((params.nScales-1)/2));
     params.scaleFactors = params.scale_step .^ params.scale_exp;
-
     if params.nScales > 0
         %force reasonable scale changes
         params.min_scale_factor = params.scale_step ^ ceil(log(max(5 ./ params.img_support_sz)) / log(params.scale_step));
@@ -246,7 +245,6 @@ if (params.seq.isFirst)
             % Also sum over all feature blocks.
             % Gives the fourier coefficients of the convolution response.
             params.scores_fs = permute(gather(params.scores_fs_sum), [1 2 4 3]);
-            
             params.responsef_padded = resizeDFT2(params.scores_fs, params.output_sz);
             params.response = ifft2(params.responsef_padded, 'symmetric');
             [params.disp_row, params.disp_col, params.sind] = resp_newton(params.response, params.responsef_padded, params.newton_iterations, params.ky, params.kx, params.output_sz);
@@ -265,7 +263,6 @@ if (params.seq.isFirst)
                         
             % Update the scale
             params.currentScaleFactor = params.currentScaleFactor * params.scale_change_factor;
-            
             % Adjust to make sure we are not to large or to small
             if params.currentScaleFactor < params.min_scale_factor
                 params.currentScaleFactor = params.min_scale_factor;

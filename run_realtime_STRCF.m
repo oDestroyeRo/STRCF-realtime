@@ -31,14 +31,14 @@ if ~(params.seq.isFirst)
     params.max_image_sample_size = 200^2;   % Maximum area of image samples
 
     % Spatial regularization window_parameters
-    params.feature_downsample_ratio = [4]; %  Feature downsample ratio
+    params.feature_downsample_ratio = 4; %  Feature downsample ratio
     params.reg_window_max = 1e5;           % The maximum value of the regularization window
     params.reg_window_min = 1e-3;           % the minimum value of the regularization window
 
     % Detection parameters
     params.refinement_iterations = 1;       % Number of iterations used to refine the resulting position in a frame
     params.newton_iterations = 5;           % The number of Newton iterations used for optimizing the detection score
-    params.clamp_position = false;          % Clamp the target position to be inside the image
+    params.clamp_position = true;          % Clamp the target position to be inside the image
 
     % Learning parameters
     params.output_sigma_factor = 1/16;		% Label function sigma
