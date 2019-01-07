@@ -14,17 +14,12 @@
 
    $ git clone https://github.com/oDestroyeRo/STRCF-realtime
 
-2. Clone the submodules.  
-   In the repository directory, run the commands:
 
-   $ git submodule init  
-   $ git submodule update
-
-3. Start Matlab and navigate to the repository.  
+2. Start Matlab and navigate to the repository.  
    Run the install script:
 
    |>> install
 
-4. Run the demo script to test the tracker:
+3. Run the demo script to test the tracker:
 
    |>> gui.m
