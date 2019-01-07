@@ -1,12 +1,13 @@
 # Installation
 
+If you have to use gpu, you have to run on Ubuntu 
+
 ### install python2 or python3
 
-1. pip install opencv-python numpy glob2
+1. pip install opencv-python numpy glob2 Pillow
 2. git clone https://github.com/davisking/dlib
-3. cd dlib
-4. python setup.py install
-5. pip install face_recognition
+3. cd dlib && python setup.py install
+4. pip install face_recognition
 
 ### clone this project
 
