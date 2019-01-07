@@ -8,7 +8,7 @@
 4. python setup.py install
 5. pip install face_recognition
 
-### Using git clone
+### clone this project
 
 1. Clone the GIT repository:
 
