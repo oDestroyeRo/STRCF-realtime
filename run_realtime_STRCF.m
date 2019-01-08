@@ -59,7 +59,7 @@ if ~(params.seq.isFirst)
     params.visualization = 1;               % Visualiza tracking and detection scores
 
     % GPU
-    params.use_gpu = false;                 % Enable GPU or not
+    params.use_gpu = true;                 % Enable GPU or not
     params.gpu_id = [];                     % Set the GPU id, or leave empty to use default
 
     % Initialize
