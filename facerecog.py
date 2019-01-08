@@ -22,7 +22,7 @@ def recog(frame):
     image = np.asarray(frame)
     small_frame = cv2.resize(image, (0, 0), fx=0.50, fy=0.50)
     rgb_small_frame = small_frame[:, :, ::-1]
-    face_locations = face_recognition.face_locations(rgb_small_frame)
+    face_locations = face_recognition.face_locations(rgb_small_frame, model="cnn")
     face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
     face_names = []
     for face_encoding in face_encodings:
