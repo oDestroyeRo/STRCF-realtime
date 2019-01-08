@@ -202,17 +202,17 @@ while (handles.isStart)
     handles = guidata(hObject);  %Get the newest GUI data
     handles.img_real = img_real;
     %%recog stage
-    if mod(count,3) == 0
+    if mod(count,1) == 0
         bbox = py.facerecog.recog(img_real);
         bbox = cell(bbox);
         if py.len(bbox) > 0
             for n = 1:py.len(bbox)
                 name = string(bbox{n}{2});
                 if name ~= "Unknown" 
-                    top = double(bbox{n}{1}{1})*2;
-                    right = double(bbox{n}{1}{2})*2;
-                    bottom = double(bbox{n}{1}{3})*2;
-                    left = double(bbox{n}{1}{4})*2;
+                    top = double(bbox{n}{1}{1})*4;
+                    right = double(bbox{n}{1}{2})*4;
+                    bottom = double(bbox{n}{1}{3})*4;
+                    left = double(bbox{n}{1}{4})*4;
                     b = [left, top, right-left ,bottom-top];              
                     indexSame = -1;
                     [~,handles.countList] = size(handles.listParams);
@@ -233,10 +233,10 @@ while (handles.isStart)
                     handles.listParams(handles.countList+1).params = handles.params;  
                     
                 else
-                    top = double(bbox{n}{1}{1})*2;
-                    right = double(bbox{n}{1}{2})*2;
-                    bottom = double(bbox{n}{1}{3})*2;
-                    left = double(bbox{n}{1}{4})*2;
+                    top = double(bbox{n}{1}{1})*4;
+                    right = double(bbox{n}{1}{2})*4;
+                    bottom = double(bbox{n}{1}{3})*4;
+                    left = double(bbox{n}{1}{4})*4;
                     b = [left, top, right-left ,bottom-top]; 
                     rect = rectangle('Position',b);
                     set(rect,'FaceColor','none','EdgeColor',"y",'LineWidth',2);
